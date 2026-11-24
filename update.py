@@ -24,7 +24,7 @@ for blk in page.split('<div class="tgme_widget_message_wrap')[1:]:
     L=t.split("\n"); k24,k21,k18=val(L,"عيار 24"),val(L,"عيار 21"),val(L,"عيار 18")
     if not(k24 and k21 and k18) or k24<500 or abs(k21/k24-0.875)>0.01 or abs(k18/k24-0.75)>0.01: continue
     posts.append({"t":datetime.datetime.fromisoformat(tm.group(1)).astimezone(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-      "k24":k24,"k21":k21,"k18":k18,"pound":val(L,"جنيه ذهب"),"oz":val(L,"أونصة عالميا","أونصة عالميًا")})
+      "k24":k24,"k21":k21,"k18":k18,"pound":val(L,"جنيه ذهب"),"oz":val(L,"أونصة عالميا","أونصة عالميًا"),"bank":val(L,"البنك"),"par":val(L,"الموازي")})
 if not posts: print("no valid posts"); sys.exit(1)
 last=posts[-1]
 hist=[]
@@ -55,6 +55,13 @@ if ref is None: trend="unknown"
 elif ref["pct"]>=0.4: trend="up"
 elif ref["pct"]<=-0.4: trend="down"
 else: trend="flat"
-out={"generatedAt":datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),"price":last,"d1":d1,"d7":d7,"short":short,"trend":trend,"history":hist}
+import math
+span=(now-parse(pts[0]["t"])).total_seconds()/3600 if len(pts)>1 else 0
+mom=ref["pct"] if ref else 0
+conf=min(1.0,span/72)
+dev=min(15,abs(50*math.tanh(mom/0.8))*(0.3+0.7*conf)) if ref else 0
+up=round(50+(dev if mom>0 else -dev)); 
+prob={"up":up,"down":100-up,"hours":24,"conf":"low" if span<72 else ("mid" if span<24*7 else "ok"),"span":round(span,1)}
+out={"prob":prob,"generatedAt":datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),"price":last,"d1":d1,"d7":d7,"short":short,"trend":trend,"history":hist}
 json.dump(out,open(OUT,"w"),ensure_ascii=False)
 print(json.dumps({k:v for k,v in out.items() if k!="history"},ensure_ascii=False))
