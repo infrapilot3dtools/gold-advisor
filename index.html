@@ -1,24 +1,51 @@
 <!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>الذهب - نسخة تجريبية</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg">
-<style>body{font-family:sans-serif;background:#f4f1ea;color:#1c2030;max-width:520px;margin:0 auto;padding:16px}
-.card{background:#fff;border:1px solid #e3ddd0;border-radius:16px;padding:16px;margin:12px 0}
-.demo{background:#fff3cd;border-color:#e0c36a}input{width:100%;box-sizing:border-box;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:10px;font-size:16px}
-button{padding:10px 16px;border:0;border-radius:10px;background:#b8860b;color:#fff;font-size:16px}.big{font-size:32px;font-weight:bold}.warn{color:#b9770e}</style></head><body>
-<h2 style="color:#b8860b">الذهب</h2>
-<div class="card demo"><b>نسخة تجريبية - مفيش بيانات حية.</b><br>الصفحة دي مش بتجيب أسعار تلقائيا. مفيش تحديث كل ساعة. أداة مساعدة، مش توصية.</div>
-<div class="card"><b>إدخال يدوي</b>
-<input id="p" inputmode="decimal" placeholder="سعر الذهب (دولار للأونصة)">
-<input id="q" inputmode="decimal" placeholder="سعر الإغلاق السابق">
-<input id="e" inputmode="decimal" placeholder="سعر عيار 21 في مصر (جنيه) - اختياري">
-<button id="s">احسب واحفظ</button></div>
-<div class="card" id="out">مفيش بيانات مدخلة.</div>
+<title>الذهب</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg">
+<style>body{font-family:sans-serif;background:#f4f1ea;color:#1c2030;max-width:520px;margin:0 auto;padding:14px}
+.card{background:#fff;border:1px solid #e3ddd0;border-radius:16px;padding:14px;margin:10px 0}
+.row{display:flex;gap:10px}.row>div{flex:1;text-align:center}.big{font-size:28px;font-weight:bold}.s{font-size:12px;color:#6b6f80}
+.warn{background:#fff3cd;border-color:#e0c36a}input{width:100%;box-sizing:border-box;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:10px;font-size:16px}
+button{padding:10px 16px;border:0;border-radius:10px;background:#b8860b;color:#fff;font-size:16px}a{color:#7a5a08}</style></head><body>
+<h2 style="color:#b8860b;margin:4px 0">الذهب</h2>
+<div id="stale"></div>
+<div class="card"><div class="s" style="text-align:center">الذهب عالميا (سبوت) - دولار للأونصة</div><div class="big" id="usd" style="text-align:center">...</div><div class="s" id="chg" style="text-align:center"></div></div>
+<div class="row"><div class="card"><div class="s">عيار 21 في السعودية (تقديري، ريال/جرام)</div><div class="big" id="sar">-</div></div>
+<div class="card"><div class="s">عيار 21 في مصر (تقديري، جنيه/جرام)</div><div class="big" id="egp">-</div></div></div>
+<div class="card s" id="meta"></div>
+<div class="card"><b>سعر المحل الفعلي (إدخال يدوي)</b><div class="s">سعر جرام عيار 21 في مصر زي ما المحل قالك.</div>
+<input id="shop" inputmode="decimal" placeholder="جنيه للجرام"><button id="sv">احفظ</button><div id="shopout" class="s" style="margin-top:8px"></div></div>
+<div class="card s">أداة مساعدة، مش توصية. الأرقام تقديرية: السعودية بالمعادلة (سعر الأونصة ÷ 31.1035 × 3.75 × العيار) بدون ضريبة ولا مصنعية. سعر مصر التقديري = سعر الذهب العالمي × سعر الدولار/الجنيه الرسمي، وهو <b>مش سعر المحل</b> وممكن يختلف عنه كتير. بتتحدث لما تفتح الصفحة (ولو سبتها مفتوحة كل دقيقة)، مفيش تحديث تلقائي في الخلفية.<br>
+المصادر: <a href="https://gold-api.com">gold-api.com</a> (سعر الذهب) · <a href="https://www.exchangerate-api.com">Rates By Exchange Rate API</a> (الدولار/الجنيه) · <span id="gp"></span>
+<a href="https://goldprice.dev">goldprice.dev</a> (مراجعة).</div>
 <script>
-const $=i=>document.getElementById(i);
-function show(){const d=JSON.parse(localStorage.getItem("gold")||"null");if(!d){return}
-const ch=d.q?((d.p-d.q)/d.q*100).toFixed(2):null;const age=(Date.now()-d.t)/3600000;
-$("out").innerHTML=`<div class="big">$${d.p}</div>${ch!==null?`<div>التغير: ${ch}%</div>`:""}${d.e?`<div>عيار 21 مصر: ${d.e} جنيه</div>`:""}
-<div style="font-size:13px;margin-top:8px">أدخلتها يدويا: ${new Date(d.t).toLocaleString("ar-EG")} (من ${age<1?"أقل من ساعة":Math.floor(age)+" ساعة"})</div>
-${age>6?'<div class="warn">تنبيه: الأرقام قديمة، حدّثها.</div>':""}`}
-$("s").onclick=()=>{const p=parseFloat($("p").value);if(!p)return;localStorage.setItem("gold",JSON.stringify({p,q:parseFloat($("q").value)||0,e:parseFloat($("e").value)||0,t:Date.now()}));show()};
-show();
+const $=i=>document.getElementById(i),G=31.1035,P21=0.875;
+const f=(x,d=0)=>x==null||isNaN(x)?"-":Number(x).toLocaleString("en-US",{maximumFractionDigits:d});
+async function j(u){const c=new AbortController();setTimeout(()=>c.abort(),10000);const r=await fetch(u,{signal:c.signal,cache:"no-store"});if(!r.ok)throw new Error(r.status);return r.json()}
+let last={};
+async function load(){
+ const [g,fx,gp]=await Promise.allSettled([j("https://api.gold-api.com/price/XAU"),j("https://open.er-api.com/v6/latest/USD"),j("https://api.goldprice.dev/v1/prices?symbol=XAU-USD-SPOT")]);
+ let msg=[];
+ if(g.status!=="fulfilled"){ $("stale").innerHTML='<div class="card warn"><b>مش قادر أجيب سعر الذهب دلوقتي.</b> '+(localStorage.gold_last?'آخر رقم محفوظ: $'+f(JSON.parse(localStorage.gold_last).p,2)+' من '+new Date(JSON.parse(localStorage.gold_last).t).toLocaleString("ar-EG")+' (قديم).':'')+'</div>';return}
+ const usd=g.value.price,t=new Date(g.value.updatedAt).getTime();
+ const prev=JSON.parse(localStorage.gold_last||"null");
+ localStorage.gold_last=JSON.stringify({p:usd,t:Date.now()});
+ $("usd").textContent="$"+f(usd,2);
+ $("chg").textContent=prev&&prev.p?("من آخر زيارة: "+((usd-prev.p)/prev.p*100).toFixed(2)+"%"):"";
+ const gram=usd/G;
+ $("sar").textContent=f(gram*3.75*P21,0);
+ const age=(Date.now()-t)/60000;
+ $("stale").innerHTML=age>30?'<div class="card warn"><b>تنبيه:</b> سعر الذهب عمره '+Math.round(age)+' دقيقة، ممكن يكون قديم.</div>':"";
+ let m="سعر الذهب: "+new Date(t).toLocaleString("ar-EG")+" (عمره "+Math.max(0,Math.round(age))+" دقيقة)";
+ if(fx.status==="fulfilled"&&fx.value.rates&&fx.value.rates.EGP){const r=fx.value.rates.EGP;last.egp=gram*r*P21;$("egp").textContent=f(last.egp,0);
+  m+="<br>الدولار/الجنيه: "+r.toFixed(2)+" (Exchange Rate API، آخر تحديث "+new Date(fx.value.time_last_update_utc).toLocaleString("ar-EG")+"، بيتحدث مرة في اليوم)"}
+ else m+="<br>سعر الدولار/الجنيه مش متاح دلوقتي.";
+ if(gp.status==="fulfilled"&&gp.value.symbols&&gp.value.symbols[0]){const x=gp.value.symbols[0],p=parseFloat(x.price);
+  m+="<br>مراجعة goldprice.dev: $"+f(p,2)+" (متأخر حوالي 15 دقيقة)، الفرق "+((usd-p)/p*100).toFixed(2)+"%"}
+ else m+="<br>مراجعة goldprice.dev: مش متاحة من الصفحة دلوقتي.";
+ $("meta").innerHTML=m;shop()}
+function shop(){const s=JSON.parse(localStorage.shop||"null");if(!s){$("shopout").textContent="";return}
+ const h=(Date.now()-s.t)/3600000;let o="سعر المحل: "+f(s.v,0)+" جنيه (أدخلته "+new Date(s.t).toLocaleString("ar-EG")+")";
+ if(last.egp)o+=" - الفرق عن التقديري: "+((s.v-last.egp)/last.egp*100).toFixed(1)+"%";
+ if(h>12)o+=" - <b>قديم، حدّثه</b>";$("shopout").innerHTML=o}
+$("sv").onclick=()=>{const v=parseFloat($("shop").value);if(!v)return;localStorage.shop=JSON.stringify({v,t:Date.now()});shop()};
+$("gp").textContent="";load();setInterval(load,60000);
 </script></body></html>
