@@ -1,27 +1,28 @@
 <!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>الذهب</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><meta name="theme-color" content="#b8860b">
 <style>
-:root{--bg:#f4f1ea;--card:#fff;--line:#e6dfd0;--tx:#1c2030;--mu:#6b6f80;--up:#1f8a4c;--dn:#c0392b;--ac:#b8860b;--w:#fff3cd}
-[data-t=dark]{--bg:#12141b;--card:#1c202b;--line:#2b3040;--tx:#eceff6;--mu:#9aa1b5;--up:#41c57a;--dn:#ff6b5c;--w:#3a3115}
+:root{--bg:#f4f1ea;--card:#fff;--line:#e6dfd0;--tx:#1c2030;--mu:#6b6f80;--up:#1f8a4c;--fl:#c99a06;--dn:#c0392b;--ac:#b8860b;--w:#fff3cd}
+[data-t=dark]{--bg:#12141b;--card:#1c202b;--line:#2b3040;--tx:#eceff6;--mu:#9aa1b5;--up:#41c57a;--fl:#f0c33c;--dn:#ff6b5c;--w:#3a3115}
 body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--tx);max-width:520px;margin:0 auto;padding:14px}
 .top{display:flex;justify-content:space-between;align-items:center}h1{font-size:22px;color:var(--ac);margin:4px 0}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin:10px 0;box-shadow:0 2px 8px rgba(0,0,0,.05)}
 .g{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.g .card{margin:0;text-align:center;padding:12px 6px}
 .s{font-size:12px;color:var(--mu)}.big{font-size:26px;font-weight:700;margin:4px 0}
 .tr{display:flex;align-items:center;gap:14px}.ar{font-size:54px;line-height:1}
-.up{color:var(--up)}.dn{color:var(--dn)}.fl{color:var(--mu)}
+.up{color:var(--up)}.dn{color:var(--dn)}.fl{color:var(--fl)}.pb{display:flex;height:12px;border-radius:8px;overflow:hidden;margin:8px 0 4px}.pb div{height:100%}.adv{font-size:14px;line-height:1.7;margin-top:8px}
 .warn{background:var(--w);border-color:#e0c36a}button{background:var(--card);border:1px solid var(--line);color:var(--tx);border-radius:12px;width:42px;height:42px;font-size:18px}
 input{width:100%;box-sizing:border-box;padding:10px;margin:6px 0;border:1px solid var(--line);border-radius:10px;font-size:16px;background:var(--bg);color:var(--tx)}
 .sv{background:var(--ac);color:#fff;width:auto;padding:0 18px;border:0}
 </style></head><body>
 <div class="top"><h1>الذهب</h1><button id="th" title="فاتح / داكن">◐</button></div>
 <div id="stale"></div>
-<div class="card"><div class="tr"><div class="ar" id="ar">…</div><div><div class="big" id="tt">بحمّل…</div><div id="rec" class="s" style="font-size:14px;color:var(--tx)"></div></div></div><div class="s" id="ch" style="margin-top:8px"></div></div>
+<div class="card" id="card0" style="border-width:2px"><div class="tr"><div class="ar" id="ar">…</div><div><div class="big" id="tt">بحمّل…</div><div id="rec" class="s" style="font-size:14px;color:var(--tx)"></div></div></div><div class="s" id="ch" style="margin-top:8px"></div><div class="adv" id="adv"></div><div class="s" style="margin-top:10px">احتمال الاتجاه خلال 24 ساعة</div><div class="pb"><div id="pu" style="background:var(--up)"></div><div id="pd2" style="background:var(--dn)"></div></div><div class="s" id="pt"></div></div>
 <div class="s" style="margin:8px 4px 0">مصر (جنيه للجرام)</div>
 <div class="g"><div class="card"><div class="s">عيار 24</div><div class="big" id="k24">-</div></div><div class="card"><div class="s">عيار 21</div><div class="big" id="k21">-</div></div><div class="card"><div class="s">عيار 18</div><div class="big" id="k18">-</div></div></div>
 <div class="card"><div class="s">جنيه الذهب</div><div class="big" id="pd">-</div><div class="s">الأسعار من غير مصنعية</div></div>
 <div class="s" style="margin:8px 4px 0">السعودية (ريال للجرام، تقديري)</div>
 <div class="g"><div class="card"><div class="s">عيار 24</div><div class="big" id="s24">-</div></div><div class="card"><div class="s">عيار 21</div><div class="big" id="s21">-</div></div><div class="card"><div class="s">عيار 18</div><div class="big" id="s18">-</div></div></div>
+<div class="card"><div class="s">سعر الدولار مقابل الجنيه</div><div class="big" id="usd">-</div><div class="s" id="usd2"></div></div>
 <div class="card"><div class="s">الذهب عالميا</div><div class="big" id="oz">-</div><div class="s">دولار للأونصة</div></div>
 <div class="card"><b>سعر المحل عندك</b><div class="s">اكتب سعر جرام 21 زي ما المحل قالك، وهقارنه بالسعر هنا.</div>
 <input id="shop" inputmode="decimal" placeholder="جنيه للجرام"><button class="sv" id="sv">احفظ</button><div id="shopout" class="s" style="margin-top:8px"></div></div>
@@ -40,9 +41,13 @@ $("sv").onclick=()=>{const v=parseFloat($("shop").value);if(v){localStorage.shop
  const p=j.price,age=Date.now()-new Date(p.t).getTime(),gen=Date.now()-new Date(j.generatedAt).getTime();
  egp=p.k21;$("k24").textContent=f(p.k24);$("k21").textContent=f(p.k21);$("k18").textContent=f(p.k18);$("pd").textContent=f(p.pound);
  if(p.oz){$("oz").textContent="$"+f(p.oz,1);const g=p.oz/31.1035*3.75;$("s24").textContent=f(g,0);$("s21").textContent=f(g*.875,0);$("s18").textContent=f(g*.75,0)}
- const M={up:["▲","up","صاعد","الذهب طالع. لو ناوي تشتري، راقب لأن السعر أعلى من قبل."],down:["▼","dn","هابط","الذهب نازل. ممكن تستنى لحد ما السعر يثبت قبل الشراء."],flat:["◆","fl","عرضي","مفيش اتجاه واضح دلوقتي."],unknown:["…","fl","لسه بجمع بيانات","محتاج وقت أكتر عشان أحدد الاتجاه."]}[j.trend];
+ const M={up:["▲","up","صاعد","الذهب طالع.","لو هتشتري: السعر أعلى من قبل، اشتري على دفعات ومتجريش ورا الصعود.","لو هتبيع: الوضع كويس للبيع، ممكن تبيع جزء وتسيب الباقي."],down:["▼","dn","هابط","الذهب نازل. ممكن تستنى لحد ما السعر يثبت قبل الشراء.","لو هتشتري: استنى لحد ما النزول يهدى، أو اشتري على دفعات صغيرة.","لو هتبيع: لو مش مستعجل ممكن تستنى ارتداد، ولو محتاج السيولة بيع جزء."],flat:["◆","fl","متعادل","مفيش اتجاه واضح دلوقتي.","لو هتشتري: مفيش استعجال، وقتك مناسب لو الشراء بغرض الادخار.","لو هتبيع: مفيش سبب يخليك تستعجل، حسب احتياجك."],unknown:["…","fl","لسه بجمع بيانات","محتاج وقت أكتر عشان أحدد الاتجاه.","",""]}[j.trend];
+ $("adv").innerHTML=M[4]?M[4]+"<br>"+M[5]:"";
+ $("card0").style.borderColor="var(--"+(j.trend==="up"?"up":j.trend==="down"?"dn":"fl")+")";
+ if(j.prob&&j.trend!=="unknown"){$("pu").style.width=j.prob.up+"%";$("pd2").style.width=j.prob.down+"%";$("pt").innerHTML='<b class="up">طلوع '+j.prob.up+'%</b> · <b class="dn">نزول '+j.prob.down+'%</b> · تقدير إحصائي بسيط من حركة الأسعار الأخيرة'+(j.prob.conf==="low"?" (ثقة ضعيفة، البيانات لسه قليلة)":j.prob.conf==="mid"?" (ثقة متوسطة)":"")+". مش توقع مضمون."}
+ if(p.bank){$("usd").textContent=f(p.bank,2)+" جنيه";$("usd2").textContent="سعر البنك"+(p.par?" · الموازي "+f(p.par,2):"")}
  $("ar").textContent=M[0];$("ar").className="ar "+M[1];$("tt").textContent="الاتجاه: "+M[2];$("tt").className="big "+M[1];$("rec").textContent=M[3];
  const r=[];if(j.short)r.push("آخر "+Math.round(j.short.hours)+" ساعة: "+j.short.pct+"%");if(j.d1)r.push("يوم: "+j.d1.pct+"%");if(j.d7)r.push("أسبوع: "+j.d7.pct+"%");$("ch").textContent=r.join("  |  ")+" (عيار 21)";
  if(age>10800000||gen>10800000)$("stale").innerHTML='<div class="card warn"><b>تنبيه:</b> الأسعار قديمة (عمرها '+ago(Math.min(age,1e15))+'). مش بتتحدث دلوقتي.</div>';
- $("foot").innerHTML="أداة مساعدة، مش توصية ومفيش ضمان. سعر مصر من قناة تليجرام «أسعار الذهب»، آخر سعر من "+ago(age)+" (وقت السعر: "+new Date(p.t).toLocaleString("ar-EG")+"). سعر السعودية بالحساب من السعر العالمي، من غير ضريبة ومصنعية. الصفحة بتتحدث بشكل دوري ومش لحظيا.";shop()})();
+ $("foot").innerHTML="أداة مساعدة، مش توصية ومفيش ضمان. آخر سعر من "+ago(age)+" (وقت السعر: "+new Date(p.t).toLocaleString("ar-EG")+"). سعر السعودية بالحساب من السعر العالمي، من غير ضريبة ومصنعية. الصفحة بتتحدث بشكل دوري ومش لحظيا.";shop()})();
 </script></body></html>
