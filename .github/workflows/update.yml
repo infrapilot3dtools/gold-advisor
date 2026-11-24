@@ -21,7 +21,7 @@ jobs:
       - name: Build data.json
         run: |
           mkdir -p _site
-          cp index.html manifest.webmanifest sw.js icon-192.png icon-512.png _site/
+          cp index.html manifest.webmanifest sw.js icon.svg _site/
           go run . -out _site/data.json -prev "https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/data.json"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
