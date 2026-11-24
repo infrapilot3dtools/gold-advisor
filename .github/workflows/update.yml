@@ -1,5 +1,7 @@
 name: update-data
 on:
+  schedule:
+    - cron: "17 * * * *"
   workflow_dispatch:
 permissions:
   contents: read
@@ -13,10 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build static demo site
+      - name: Build site
         run: |
           mkdir -p _site
           cp index.html manifest.webmanifest sw.js icon.svg _site/
+          python3 update.py _site/data.json "https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/data.json"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
