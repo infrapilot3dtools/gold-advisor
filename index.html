@@ -321,11 +321,12 @@ function asset(slug){return feed&&feed.d&&feed.d.assets?feed.d.assets.find(a=>a.
 function man(){return ls.get("ga_manual")}
 function pricePair(slug){
   const m=man();
-  if(m&&slug==="gold-21k")return{buy:m.buy,sell:m.sell,manual:true};
+  if(m&&slug==="gold-21k")return{pay:m.pay,receive:m.receive,manual:true};
   const a=asset(slug);
   if(!a||!a.directions)return null;
+  // directions.buy = what YOU pay when buying new; directions.sell = what YOU receive when selling (per Daleelak's own buy/sell pages)
   const b=a.directions.buy&&a.directions.buy.best, s=a.directions.sell&&a.directions.sell.best;
-  return{buy:b?b.value:null, sell:s?s.value:null, series:a.series||[], asOf:a.asOf, fresh:a.freshness&&a.freshness.state};
+  return{pay:b?b.value:null, receive:s?s.value:null, series:a.series||[], asOf:a.asOf, fresh:a.freshness&&a.freshness.state};
 }
 
 /* ---------- indicators ---------- */
@@ -394,11 +395,11 @@ function renderPrices(){
   $("priceAge").textContent=feed?"· "+ago(feed.t)+(feed.d&&feed.d.generatedAt?"":"")
     :"";
   const p21=pricePair("gold-21k"),p24=pricePair("gold-24k"),p18=pricePair("gold-18k"),pd=pricePair("gold-pound");
-  $("p21sell").innerHTML=p21&&p21.sell?fmt(p21.sell,0)+' <span class="unit">جنيه/جرام</span>':"—";
-  $("p21buy").textContent=p21&&p21.buy?fmt(p21.buy,0):"—";
-  $("p24sell").textContent=p24&&p24.sell?fmt(p24.sell,0):"—";
-  $("p18sell").textContent=p18&&p18.sell?fmt(p18.sell,0):"—";
-  $("pound").textContent=pd&&pd.sell?fmt(pd.sell,0):"—";
+  $("p21sell").innerHTML=p21&&p21.pay?fmt(p21.pay,0)+' <span class="unit">جنيه/جرام</span>':"—";
+  $("p21buy").textContent=p21&&p21.receive?fmt(p21.receive,0):"—";
+  $("p24sell").textContent=p24&&p24.pay?fmt(p24.pay,0):"—";
+  $("p18sell").textContent=p18&&p18.pay?fmt(p18.pay,0):"—";
+  $("pound").textContent=pd&&pd.pay?fmt(pd.pay,0):"—";
   let chgEl=$("p21chg");chgEl.textContent="";chgEl.className="chg";
   if(p21&&p21.series&&p21.series.length>=2){
     const s=p21.series;
@@ -409,7 +410,7 @@ function renderPrices(){
       chgEl.classList.add(d>0.05?"up":d<-0.05?"down":"flat");}
   }
   const usdA=asset("us-dollar");
-  $("usd").textContent=usdA&&usdA.directions?fmt(usdA.directions.sell.best.value,2):"—";
+  $("usd").textContent=usdA&&usdA.directions?fmt(usdA.directions.buy.best.value,2):"—";
   $("oz").innerHTML=spot?fmt(spot.d.spot_usd_oz,0)+' <span class="unit">$</span>':"—";
   // banner
   const sb=$("staleBanner"),db=$("downBanner");
@@ -418,9 +419,9 @@ function renderPrices(){
   else{sb.className="banner warn";db.className="banner err"}
   // premium
   const usdRate=usdA&&usdA.global?usdA.global.value:(usdA&&usdA.benchmark?usdA.benchmark.sell:null);
-  if(p21&&p21.sell&&spot&&usdRate){
+  if(p21&&p21.pay&&spot&&usdRate){
     const theo=spot.d.spot_usd_oz/31.1035*(21/24)*usdRate;
-    const prem=(p21.sell-theo)/theo*100;
+    const prem=(p21.pay-theo)/theo*100;
     $("premium").textContent=(prem>0?"+":"")+fmt(prem,1)+"%";
     $("premium").style.color=prem>3?"var(--red)":prem<-3?"var(--green)":"var(--text)";
   }else{$("premium").textContent="—";$("premium").style.color="var(--text)"}
@@ -503,7 +504,7 @@ function renderPurchases(){
   let totW=0,totC=0,totV=0;
   el.innerHTML=list.map((b,i)=>{
     const pr=pricePair("gold-"+b.karat+"k");
-    const cur=pr&&pr.buy?pr.buy*b.weight:null;
+    const cur=pr&&pr.receive?pr.receive*b.weight:null;
     const cost=b.weight*b.price+(+b.fees||0);
     const pl=cur!=null?cur-cost:null;
     const be=b.weight?cost/b.weight:null;
@@ -548,10 +549,10 @@ function checkAlerts(){
   a.forEach(x=>{
     if(x.hit)return;
     const pr=pricePair("gold-"+x.karat+"k");
-    if(!pr||!pr.sell)return;
-    if((x.dir==="below"&&pr.sell<=x.price)||(x.dir==="above"&&pr.sell>=x.price)){
+    if(!pr||!pr.pay)return;
+    if((x.dir==="below"&&pr.pay<=x.price)||(x.dir==="above"&&pr.pay>=x.price)){
       x.hit=true;changed=true;
-      const msg="عيار "+x.karat+" وصل "+fmt(pr.sell,0)+" جنيه ("+(x.dir==="below"?"تحت":"فوق")+" "+fmt(x.price,0)+")";
+      const msg="عيار "+x.karat+" وصل "+fmt(pr.pay,0)+" جنيه ("+(x.dir==="below"?"تحت":"فوق")+" "+fmt(x.price,0)+")";
       toast(msg);
       if("Notification"in window&&Notification.permission==="granted"){try{new Notification("تنبيه الذهب",{body:msg})}catch(e){}}
     }
@@ -565,9 +566,9 @@ $("zCalc").onclick=()=>{
   const res=$("zRes");
   const pk=pricePair("gold-"+k+"k"), p24=pricePair("gold-24k");
   if((!w&&!cash)||!pk||!p24){res.classList.remove("hidden");res.innerHTML='أدخل وزن الذهب أو مبلغًا نقديًا، وتأكد من توفر الأسعار.';return}
-  const goldVal=w*(pk.sell||0);
+  const goldVal=w*(pk.receive||0);
   const total=goldVal+cash;
-  const nisab=85*(p24.sell||0);
+  const nisab=85*(p24.receive||0);
   let html='قيمة الذهب: '+fmt(goldVal,0)+' جنيه'+(cash?' + نقود '+fmt(cash,0):'')+'<br>الإجمالي: <b>'+fmt(total,0)+' جنيه</b><br>النصاب التقريبي (85 جم عيار 24): '+fmt(nisab,0)+' جنيه<br>';
   if(!hawl)html+='<br><b>لا زكاة الآن</b> لأن الحول لم يمر.';
   else if(total<nisab)html+='<br><b>لا زكاة</b> لأن الإجمالي أقل من النصاب.';
@@ -578,12 +579,12 @@ $("zCalc").onclick=()=>{
 /* ---------- manual ---------- */
 function renderManual(){
   const m=man();
-  $("mState").textContent=m?"سعر يدوي مفعّل: شراء "+fmt(m.sell,0)+" / بيع "+fmt(m.buy,0)+" ("+ago(m.t)+")":"";
+  $("mState").textContent=m?"سعر يدوي مفعّل: شراء "+fmt(m.pay,0)+" / بيع "+fmt(m.receive,0)+" ("+ago(m.t)+")":"";
 }
 $("mSave").onclick=()=>{
   const s=+$("mSell").value,b=+$("mBuy").value;
   if(!s&&!b){toast("اكتب سعرًا واحدًا على الأقل");return}
-  ls.set("ga_manual",{sell:s||b,buy:b||s,t:Date.now()});
+  ls.set("ga_manual",{pay:s||b,receive:b||s,t:Date.now()});
   renderManual();renderAll();toast("تم تفعيل السعر اليدوي");
 };
 $("mClear").onclick=()=>{localStorage.removeItem("ga_manual");renderManual();renderAll();toast("تم إلغاء السعر اليدوي");};
